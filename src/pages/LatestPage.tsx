@@ -4,34 +4,27 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ApiMovieCard from "@/components/ApiMovieCard";
 import BottomNav from "@/components/BottomNav";
-import { fetchLatestReleases } from "@/lib/api";
+import { fetchLatestReleases, type ApiItem } from "@/lib/api";
 
 const LatestPage = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["latest", page],
-    queryFn: () => fetchLatestReleases(page),
-  });
-
-  const [allItems, setAllItems] = useState<any[]>([]);
-
-  // Accumulate items across pages
-  const { data: pageData } = useQuery({
     queryKey: ["latest-all", page],
     queryFn: async () => {
-      const results = [];
+      const results: ApiItem[] = [];
       for (let p = 1; p <= page; p++) {
         const res = await fetchLatestReleases(p);
         results.push(...(res.data || []));
       }
-      return results;
+      const lastRes = await fetchLatestReleases(page);
+      return { items: results, totalPages: lastRes.total_pages };
     },
   });
 
-  const items = pageData || data?.data || [];
-  const totalPages = data?.total_pages || 1;
+  const items = data?.items || [];
+  const totalPages = data?.totalPages || 1;
 
   return (
     <div className="min-h-screen gradient-dark pb-24">
@@ -54,7 +47,7 @@ const LatestPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {items.map((item: any, idx: number) => (
+            {items.map((item, idx) => (
               <ApiMovieCard key={`${item.id}-${idx}`} item={item} />
             ))}
           </div>
