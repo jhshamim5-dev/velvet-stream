@@ -39,6 +39,38 @@ export interface ApiInfoResponse {
   data: ApiInfoData;
 }
 
+export interface ApiDownloadLink {
+  server: string;
+  url: string;
+}
+
+export interface ApiDownloadResponse {
+  success: boolean;
+  data: ApiDownloadLink[];
+}
+
+// Parse seasons count from info.seasons field (e.g. "05\nEpisode:...")
+export function parseSeasonsCount(seasons: string): number {
+  if (!seasons) return 1;
+  const match = seasons.match(/^(\d+)/);
+  return match ? parseInt(match[1], 10) : 1;
+}
+
+// Parse available qualities from info.quality field (e.g. "480p || 720p || 1080p || 2160p – WEB-DL")
+export function parseQualities(quality: string): string[] {
+  if (!quality) return ["720p", "1080p"];
+  const matches = quality.match(/\d+p/g);
+  if (!matches || matches.length === 0) return ["720p", "1080p"];
+  // Deduplicate
+  return [...new Set(matches)];
+}
+
+// Get numeric quality value from string like "1080p" -> 1080
+export function qualityToNumber(q: string): number {
+  const match = q.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 720;
+}
+
 export interface OmdbData {
   Title: string;
   Year: string;
